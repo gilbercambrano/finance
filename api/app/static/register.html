@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Crear cuenta — Ledger·MX</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@500;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/css/styles.css">
+<style>
+  body { display: flex; align-items: center; justify-content: center; min-height: 100vh; }
+  .auth-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+    box-shadow: var(--shadow); padding: 36px 34px; width: 100%; max-width: 380px; }
+  .auth-brand { font-family: 'Fraunces', serif; font-size: 24px; color: var(--primary-dark); margin-bottom: 2px; }
+  .auth-sub { color: var(--ink-soft); font-size: 13px; margin-bottom: 26px; }
+  .auth-error { background: var(--danger-soft); color: var(--danger); padding: 9px 12px; border-radius: var(--radius-sm);
+    font-size: 13px; margin-bottom: 14px; display: none; }
+  .auth-footer { margin-top: 18px; text-align: center; font-size: 13px; color: var(--ink-soft); }
+</style>
+</head>
+<body>
+  <div class="auth-card">
+    <div class="auth-brand">Ledger·MX</div>
+    <div class="auth-sub">Crea tu cuenta para empezar a controlar tus finanzas</div>
+    <div class="auth-error" id="auth-error"></div>
+    <form id="form-register">
+      <div class="field">
+        <label>Nombre</label>
+        <input type="text" id="reg-name" placeholder="Opcional">
+      </div>
+      <div class="field">
+        <label>Correo electrónico</label>
+        <input type="email" id="reg-email" required autofocus>
+      </div>
+      <div class="field">
+        <label>Contraseña</label>
+        <input type="password" id="reg-password" minlength="8" required>
+        <div class="text-sm muted" style="margin-top:4px;">Mínimo 8 caracteres.</div>
+      </div>
+      <button type="submit" class="btn btn-primary" style="width:100%;">Crear cuenta</button>
+    </form>
+    <div class="auth-footer">¿Ya tienes cuenta? <a href="/login">Inicia sesión</a></div>
+  </div>
+
+<script>
+document.getElementById("form-register").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const errEl = document.getElementById("auth-error");
+  errEl.style.display = "none";
+  try {
+    const res = await fetch("/api/auth/register", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        email: document.getElementById("reg-email").value,
+        password: document.getElementById("reg-password").value,
+        full_name: document.getElementById("reg-name").value || null,
+      }),
+    });
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.detail || "No se pudo crear la cuenta");
+    }
+    window.location.href = "/";
+  } catch (err) {
+    errEl.textContent = err.message;
+    errEl.style.display = "block";
+  }
+});
+</script>
+</body>
+</html>

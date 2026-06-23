@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Finanzas Personales</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@500;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/css/styles.css">
+</head>
+<body>
+
+<div class="app-shell">
+
+  <nav class="sidebar">
+    <div class="brand">Ledger·MX</div>
+    <div class="brand-sub">Control de finanzas personales</div>
+
+    <div class="nav-item active" data-view="dashboard">📊 Dashboard</div>
+    <div class="nav-item" data-view="cuentas">🏦 Cuentas</div>
+    <div class="nav-item" data-view="deudas">💳 Tarjetas y Deudas</div>
+    <div class="nav-item" data-view="movimientos">📒 Movimientos</div>
+    <div class="nav-item" data-view="fijos">🔁 Gastos Fijos</div>
+    <div class="nav-item" data-view="presupuestos">🎯 Presupuesto</div>
+    <div class="nav-item" data-view="categorias">🏷️ Categorías</div>
+
+    <div class="sidebar-footer">
+      <div id="sidebar-user" style="color:#EFE9D8;font-weight:600;margin-bottom:6px;"></div>
+      <a href="#" id="btn-logout" style="color:#A9C4B8;">Cerrar sesión</a>
+      <div style="margin-top:10px;">Datos en PostgreSQL</div>
+    </div>
+  </nav>
+
+  <main class="main">
+
+    <!-- ===================== DASHBOARD ===================== -->
+    <section class="view active" id="view-dashboard">
+      <div class="page-header">
+        <div>
+          <h1>Dashboard</h1>
+          <div class="subtitle">Visión general de tu patrimonio y flujo de efectivo</div>
+        </div>
+        <button class="btn" id="btn-refresh-dashboard">↻ Actualizar</button>
+      </div>
+
+      <div class="grid grid-4" id="kpi-row" style="margin-bottom:18px;"></div>
+      <div class="grid grid-4" id="kpi-row-2" style="margin-bottom:18px;"></div>
+
+      <div class="grid grid-2" style="margin-bottom:18px;">
+        <div class="card">
+          <h3>Tendencia — ingresos vs. gastos (6 meses)</h3>
+          <div class="chart-wrap"><canvas id="chart-tendencia"></canvas></div>
+        </div>
+        <div class="card">
+          <h3>Saldos por cuenta</h3>
+          <div id="ledger-accounts"></div>
+        </div>
+      </div>
+
+      <div class="grid grid-2" style="margin-bottom:18px;">
+        <div class="card">
+          <h3>Gasto del mes por categoría</h3>
+          <div class="chart-wrap"><canvas id="chart-categorias"></canvas></div>
+        </div>
+        <div class="card">
+          <h3>Presupuesto vigente — desviaciones</h3>
+          <div id="budget-summary"></div>
+        </div>
+      </div>
+
+      <div class="grid grid-2">
+        <div class="card">
+          <h3>Pagos fijos pendientes por confirmar</h3>
+          <div id="dash-fixed-pending"></div>
+        </div>
+        <div class="card">
+          <h3>Tarjetas y deudas</h3>
+          <div id="dash-debts"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== CUENTAS ===================== -->
+    <section class="view" id="view-cuentas">
+      <div class="page-header">
+        <div>
+          <h1>Cuentas</h1>
+          <div class="subtitle">Cuentas bancarias, inversiones, préstamos otorgados y efectivo</div>
+        </div>
+        <button class="btn btn-primary" id="btn-new-account">+ Nueva cuenta</button>
+      </div>
+      <div class="card">
+        <table id="table-accounts">
+          <thead><tr><th>Cuenta</th><th>Tipo</th><th>Banco</th><th class="num">Saldo</th><th></th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ===================== TARJETAS Y DEUDAS ===================== -->
+    <section class="view" id="view-deudas">
+      <div class="page-header">
+        <div>
+          <h1>Tarjetas y Deudas</h1>
+          <div class="subtitle">Control de tarjetas de crédito y préstamos recibidos: corte, pago y tasa</div>
+        </div>
+        <button class="btn btn-primary" id="btn-new-debt">+ Nueva tarjeta / deuda</button>
+      </div>
+      <div id="debts-container"></div>
+    </section>
+
+    <!-- ===================== MOVIMIENTOS ===================== -->
+    <section class="view" id="view-movimientos">
+      <div class="page-header">
+        <div>
+          <h1>Movimientos</h1>
+          <div class="subtitle">Ingresos, gastos y transferencias entre cuentas / efectivo / tarjetas</div>
+        </div>
+        <button class="btn btn-primary" id="btn-new-transaction">+ Nuevo movimiento</button>
+      </div>
+
+      <div class="toolbar">
+        <select id="filter-kind">
+          <option value="">Todos los tipos</option>
+          <option value="ingreso">Ingresos</option>
+          <option value="gasto">Gastos</option>
+          <option value="transferencia">Transferencias</option>
+        </select>
+        <select id="filter-account"><option value="">Todas las cuentas</option></select>
+        <input type="date" id="filter-from">
+        <input type="date" id="filter-to">
+        <div class="spacer"></div>
+        <button class="btn btn-sm" id="btn-filter-clear">Limpiar filtros</button>
+      </div>
+
+      <div class="card">
+        <table id="table-transactions">
+          <thead><tr><th>Fecha</th><th>Tipo</th><th>Cuenta</th><th>Categoría</th><th>Descripción</th><th class="num">Monto</th><th></th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ===================== GASTOS FIJOS ===================== -->
+    <section class="view" id="view-fijos">
+      <div class="page-header">
+        <div>
+          <h1>Gastos Fijos</h1>
+          <div class="subtitle">Servicios, suscripciones y pagos domiciliados calendarizados</div>
+        </div>
+        <button class="btn btn-primary" id="btn-new-fixed">+ Nuevo gasto fijo</button>
+      </div>
+
+      <div class="section-title">Pendientes por confirmar</div>
+      <div class="card" style="margin-bottom:22px;">
+        <div id="fixed-pending-list"></div>
+      </div>
+
+      <div class="section-title">Catálogo de gastos fijos</div>
+      <div class="card">
+        <table id="table-fixed">
+          <thead>
+            <tr><th>Nombre</th><th>Categoría</th><th>Cuenta de pago</th><th>Frecuencia</th>
+            <th class="num">Monto est.</th><th>Próxima fecha</th><th>Modo</th><th></th></tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ===================== PRESUPUESTOS ===================== -->
+    <section class="view" id="view-presupuestos">
+      <div class="page-header">
+        <div>
+          <h1>Presupuesto</h1>
+          <div class="subtitle">Define metas por categoría y da seguimiento a las desviaciones</div>
+        </div>
+        <button class="btn btn-primary" id="btn-new-budget">+ Nuevo presupuesto</button>
+      </div>
+      <div id="budgets-container"></div>
+    </section>
+
+    <!-- ===================== CATEGORIAS ===================== -->
+    <section class="view" id="view-categorias">
+      <div class="page-header">
+        <div>
+          <h1>Categorías</h1>
+          <div class="subtitle">Catálogo de clasificación de ingresos y gastos</div>
+        </div>
+        <button class="btn btn-primary" id="btn-new-category">+ Nueva categoría</button>
+      </div>
+      <div class="grid grid-2">
+        <div class="card"><h3>Ingresos</h3><div id="list-cat-ingreso"></div></div>
+        <div class="card"><h3>Gastos</h3><div id="list-cat-gasto"></div></div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<!-- ===================== MODALES ===================== -->
+
+<div class="modal-overlay" id="modal-account">
+  <div class="modal">
+    <h2 id="modal-account-title">Nueva cuenta</h2>
+    <form id="form-account">
+      <div class="field">
+        <label>Nombre de la cuenta</label>
+        <input type="text" id="acc-name" required placeholder="Ej. BBVA Nómina">
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>Tipo</label>
+          <select id="acc-type" required>
+            <option value="debito">Débito / Nómina</option>
+            <option value="ahorro">Ahorro</option>
+            <option value="inversion">Inversión</option>
+            <option value="prestamo">Préstamo otorgado (a terceros)</option>
+            <option value="credito">Tarjeta de crédito</option>
+            <option value="prestamo_recibido">Préstamo recibido (deuda propia)</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Banco / Institución</label>
+          <input type="text" id="acc-bank" placeholder="Opcional">
+        </div>
+      </div>
+      <div class="field">
+        <label id="acc-balance-label">Saldo inicial (MXN)</label>
+        <input type="number" id="acc-balance" step="0.01" value="0" required>
+      </div>
+
+      <div id="acc-credit-fields" style="display:none;">
+        <div class="section-title">Detalle de deuda</div>
+        <div class="field-row">
+          <div class="field" id="acc-limit-field">
+            <label>Límite de crédito (MXN)</label>
+            <input type="number" id="acc-credit-limit" step="0.01">
+          </div>
+          <div class="field" id="acc-original-field" style="display:none;">
+            <label>Monto original del préstamo</label>
+            <input type="number" id="acc-original-amount" step="0.01">
+          </div>
+        </div>
+        <div class="field-row">
+          <div class="field" id="acc-cutoff-field">
+            <label>Día de corte</label>
+            <input type="number" id="acc-cutoff-day" min="1" max="31">
+          </div>
+          <div class="field">
+            <label>Día límite de pago</label>
+            <input type="number" id="acc-due-day" min="1" max="31">
+          </div>
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label>Pago mínimo (MXN)</label>
+            <input type="number" id="acc-min-payment" step="0.01">
+          </div>
+          <div class="field">
+            <label>Tasa de interés anual (%)</label>
+            <input type="number" id="acc-interest-rate" step="0.01">
+          </div>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Notas</label>
+        <textarea id="acc-notes" rows="2" placeholder="Opcional"></textarea>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn" data-close-modal>Cancelar</button>
+        <button type="submit" class="btn btn-primary">Guardar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-transaction">
+  <div class="modal">
+    <h2 id="modal-transaction-title">Nuevo movimiento</h2>
+    <form id="form-transaction">
+      <div class="field">
+        <label>Tipo de movimiento</label>
+        <select id="txn-kind" required>
+          <option value="gasto">Gasto</option>
+          <option value="ingreso">Ingreso</option>
+          <option value="transferencia">Transferencia / Retiro de efectivo / Pago de tarjeta</option>
+        </select>
+      </div>
+      <div class="field-row">
+        <div class="field"><label>Fecha</label><input type="date" id="txn-date" required></div>
+        <div class="field"><label>Monto (MXN)</label><input type="number" id="txn-amount" step="0.01" min="0.01" required></div>
+      </div>
+      <div class="field">
+        <label id="txn-account-label">Cuenta</label>
+        <select id="txn-account" required></select>
+      </div>
+      <div class="field" id="txn-to-account-field">
+        <label>Cuenta / Efectivo / Tarjeta destino</label>
+        <select id="txn-to-account"></select>
+      </div>
+      <div class="field" id="txn-category-field">
+        <label>Categoría</label>
+        <select id="txn-category"></select>
+      </div>
+      <div class="field"><label>Descripción</label><input type="text" id="txn-description" placeholder="Opcional"></div>
+      <div class="modal-actions">
+        <button type="button" class="btn" data-close-modal>Cancelar</button>
+        <button type="submit" class="btn btn-primary">Guardar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-category">
+  <div class="modal">
+    <h2>Nueva categoría</h2>
+    <form id="form-category">
+      <div class="field"><label>Nombre</label><input type="text" id="cat-name" required></div>
+      <div class="field-row">
+        <div class="field">
+          <label>Tipo</label>
+          <select id="cat-kind" required><option value="gasto">Gasto</option><option value="ingreso">Ingreso</option></select>
+        </div>
+        <div class="field">
+          <label>Clasificación</label>
+          <select id="cat-group" required>
+            <option value="fijo">Fijo</option><option value="variable">Variable</option>
+            <option value="ahorro_inversion">Ahorro / Inversión</option>
+            <option value="deuda">Deuda</option><option value="otros">Otros</option>
+          </select>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn" data-close-modal>Cancelar</button>
+        <button type="submit" class="btn btn-primary">Guardar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-budget">
+  <div class="modal" style="max-width:560px;">
+    <h2>Nuevo presupuesto</h2>
+    <form id="form-budget">
+      <div class="field"><label>Nombre del presupuesto</label><input type="text" id="bud-name" placeholder="Ej. Presupuesto Julio 2026" required></div>
+      <div class="field-row">
+        <div class="field">
+          <label>Periodicidad</label>
+          <select id="bud-period" required>
+            <option value="mensual">Mensual</option><option value="quincenal">Quincenal</option>
+            <option value="semanal">Semanal</option><option value="personalizado">Personalizado (rango fijo)</option>
+          </select>
+        </div>
+        <div class="field"><label>Fecha de inicio</label><input type="date" id="bud-start" required></div>
+      </div>
+      <div class="field" id="bud-end-field" style="display:none;"><label>Fecha de fin</label><input type="date" id="bud-end"></div>
+      <div class="section-title">Categorías y montos planeados</div>
+      <div id="bud-items"></div>
+      <button type="button" class="btn btn-sm" id="btn-add-bud-item" style="margin-top:6px;">+ Agregar categoría</button>
+      <div class="modal-actions">
+        <button type="button" class="btn" data-close-modal>Cancelar</button>
+        <button type="submit" class="btn btn-primary">Guardar presupuesto</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-fixed">
+  <div class="modal">
+    <h2 id="modal-fixed-title">Nuevo gasto fijo</h2>
+    <form id="form-fixed">
+      <div class="field"><label>Nombre</label><input type="text" id="fix-name" placeholder="Ej. Internet Telmex" required></div>
+      <div class="field-row">
+        <div class="field"><label>Categoría</label><select id="fix-category"></select></div>
+        <div class="field"><label>Cuenta de pago</label><select id="fix-account"></select></div>
+      </div>
+      <div class="field-row">
+        <div class="field"><label>Monto estimado (MXN)</label><input type="number" id="fix-amount" step="0.01" min="0.01" required></div>
+        <div class="field">
+          <label>Frecuencia</label>
+          <select id="fix-frequency" required>
+            <option value="mensual">Mensual</option><option value="quincenal">Quincenal</option>
+            <option value="semanal">Semanal</option><option value="bimestral">Bimestral</option>
+            <option value="trimestral">Trimestral</option><option value="semestral">Semestral</option>
+            <option value="anual">Anual</option>
+          </select>
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field" id="fix-dueday-field">
+          <label id="fix-dueday-label">Día del mes de vencimiento</label>
+          <input type="number" id="fix-dueday" min="0" max="31" required>
+        </div>
+        <div class="field" id="fix-startdate-field">
+          <label>Empezar a partir de</label>
+          <input type="date" id="fix-startdate">
+        </div>
+      </div>
+      <div class="field">
+        <label style="display:flex;align-items:center;gap:8px;font-weight:500;">
+          <input type="checkbox" id="fix-variable" style="width:auto;"> El monto varía cada periodo (ej. luz, agua)
+        </label>
+      </div>
+      <div class="field" id="fix-autopost-field">
+        <label style="display:flex;align-items:center;gap:8px;font-weight:500;">
+          <input type="checkbox" id="fix-autopost" style="width:auto;"> Registrar el movimiento automáticamente al llegar la fecha
+        </label>
+      </div>
+      <div class="field"><label>Notas</label><textarea id="fix-notes" rows="2" placeholder="Opcional"></textarea></div>
+      <div class="modal-actions">
+        <button type="button" class="btn" data-close-modal>Cancelar</button>
+        <button type="submit" class="btn btn-primary">Guardar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-confirm-occ">
+  <div class="modal" style="max-width:380px;">
+    <h2>Confirmar pago</h2>
+    <form id="form-confirm-occ">
+      <input type="hidden" id="occ-id">
+      <div class="field"><label id="occ-name-label">Gasto</label></div>
+      <div class="field"><label>Monto real (MXN)</label><input type="number" id="occ-amount" step="0.01" min="0.01" required></div>
+      <div class="field"><label>Cuenta de pago</label><select id="occ-account"></select></div>
+      <div class="field"><label>Fecha</label><input type="date" id="occ-date" required></div>
+      <div class="modal-actions">
+        <button type="button" class="btn" data-close-modal>Cancelar</button>
+        <button type="submit" class="btn btn-primary">Confirmar pago</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div id="toast" style="position:fixed;bottom:24px;right:24px;background:#20281F;color:#fff;padding:12px 18px;border-radius:8px;font-size:13px;display:none;z-index:100;box-shadow:0 4px 16px rgba(0,0,0,.2);"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
+<script src="/static/js/api.js"></script>
+<script src="/static/js/app.js"></script>
+</body>
+</html>
