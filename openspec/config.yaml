@@ -1,0 +1,39 @@
+schema: spec-driven
+
+context: |
+  Proyecto: Ledger·MX — aplicación de finanzas personales multiusuario.
+
+  Stack técnico:
+    - Backend: Python 3.12, FastAPI, SQLAlchemy 2.0, PostgreSQL (Alembic para migraciones)
+    - Auth: JWT en cookie httpOnly, bcrypt para contraseñas
+    - Frontend: HTML/CSS/JS vanilla (sin framework), Chart.js para gráficas
+    - Infraestructura: Docker Compose (api + db + nginx), desplegado en GCP/Ubuntu, HTTPS vía Let's Encrypt
+    - Repositorio: GitHub (gilbercambrano/finance), rama principal "main"
+
+  Dominio: control de finanzas personales — cuentas bancarias, efectivo, tarjetas
+  de crédito y deudas, gastos fijos recurrentes, presupuestos, dashboard de
+  indicadores. Cada usuario administra su información de forma aislada
+  (multiusuario real, sin compartir datos entre cuentas).
+
+  Convenciones:
+    - Commits en español, estilo conventional commits (feat:, fix:, chore:, docs:, refactor:, test:)
+    - Toda nueva funcionalidad de negocio (no solo refactors triviales) debe
+      pasar por el flujo de OpenSpec (propose → apply → archive) antes de
+      implementarse.
+    - Seguridad: este proyecto sigue OWASP Top 10 como baseline. Cualquier
+      cambio que toque autenticación, manejo de dinero/saldos, entrada de
+      datos del usuario, o dependencias externas, debe declarar explícitamente
+      qué categorías de OWASP Top 10 aplican y cómo se mitigan.
+
+rules:
+  proposal:
+    - Incluir siempre una sección "Consideraciones de seguridad (OWASP Top 10)"
+      que indique qué categorías aplican (o "Ninguna aplica" con justificación).
+    - Incluir una sección "Non-goals" para delimitar el alcance.
+    - Si el cambio toca saldos de cuentas o dinero, describir explícitamente
+      el efecto esperado en los saldos antes de implementar.
+  tasks:
+    - Desglosar en pasos chicos y verificables (idealmente menos de 2 horas cada uno).
+    - Cada tarea de backend que agregue un endpoint nuevo debe incluir su
+      prueba automatizada correspondiente como parte de la misma tarea, no
+      como tarea separada al final.
