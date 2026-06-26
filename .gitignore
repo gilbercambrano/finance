@@ -4,3 +4,7 @@ __pycache__/
 .env
 .DS_Store
 api/finanzas.db
+
+.pytest_cache/
+htmlcov/
+.coverage
